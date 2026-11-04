@@ -10,6 +10,11 @@ import android.net.Uri;
 import android.view.*;
 import android.widget.*;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -29,12 +34,26 @@ public class MainActivity extends Activity {
     };
     final String turmaPadrao="Ensino Fundamental de 9 Anos - 2º Ano";
 
-    @Override public void onCreate(Bundle b){ super.onCreate(b); db=new Database(this); inicio(); }
+    @Override public void onCreate(Bundle b){ super.onCreate(b); configurarBarrasSistema(); db=new Database(this); inicio(); }
+    void configurarBarrasSistema(){
+        WindowCompat.setDecorFitsSystemWindows(getWindow(),false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
+        WindowInsetsControllerCompat controller=new WindowInsetsControllerCompat(getWindow(),getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(true);
+        controller.setAppearanceLightNavigationBars(true);
+    }
     int dp(int n){return (int)(n*getResources().getDisplayMetrics().density+0.5f);}
     TextView texto(String s,int size){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(0xFF24292F);return t;}
     Button botao(String s){Button b=new Button(this);b.setText(s);b.setAllCaps(false);return b;}
     void base(String titulo){
-        ScrollView sc=new ScrollView(this); root=new LinearLayout(this);root.setOrientation(1);root.setPadding(dp(20),dp(16),dp(20),dp(24));root.setBackgroundColor(fundo);sc.addView(root);sc.setFillViewport(true);setContentView(sc);
+        ScrollView sc=new ScrollView(this); root=new LinearLayout(this);root.setOrientation(1);root.setPadding(dp(20),dp(16),dp(20),dp(24));root.setBackgroundColor(fundo);sc.addView(root);sc.setFillViewport(true);sc.setClipToPadding(false);sc.setBackgroundColor(fundo);
+        ViewCompat.setOnApplyWindowInsetsListener(sc,(view,windowInsets)->{
+            Insets barras=windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
+            view.setPadding(0,barras.top,0,barras.bottom);
+            return windowInsets;
+        });
+        setContentView(sc);ViewCompat.requestApplyInsets(sc);
         ImageView logo=new ImageView(this);
         int logoId=getResources().getIdentifier("logo_escola","drawable",getPackageName());
         if(logoId!=0)logo.setImageResource(logoId);
