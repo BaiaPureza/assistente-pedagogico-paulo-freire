@@ -8,6 +8,7 @@ public class Database extends SQLiteOpenHelper {
     public Database(Context c){super(c,"assistente_pedagogico.db",null,2);}
     public void onCreate(SQLiteDatabase d){
         d.execSQL("CREATE TABLE documentos(id INTEGER PRIMARY KEY AUTOINCREMENT,tipo TEXT,titulo TEXT,turma TEXT,componente TEXT,habilidades TEXT,data TEXT,conteudo TEXT,criado_em TEXT DEFAULT CURRENT_TIMESTAMP)");
+        criarTabelaVersoes(d);
     }
     public void onUpgrade(SQLiteDatabase d,int oldVersion,int newVersion){\n        if(oldVersion<2)criarTabelaVersoes(d);\n    }\n    void criarTabelaVersoes(SQLiteDatabase d){\n        d.execSQL("CREATE TABLE IF NOT EXISTS documento_versoes(id INTEGER PRIMARY KEY AUTOINCREMENT,documento_id INTEGER,tipo TEXT,titulo TEXT,turma TEXT,componente TEXT,habilidades TEXT,data TEXT,conteudo TEXT,salvo_em TEXT DEFAULT CURRENT_TIMESTAMP)");\n    }
     public long salvar(String tipo,String titulo,String turma,String componente,String habilidades,String data,String conteudo){
