@@ -1,0 +1,34 @@
+name: Gerar APK Android
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Baixar logo da escola
+        run: |
+          mkdir -p app/src/main/res/drawable
+          curl -L "https://raw.githubusercontent.com/BaiaPureza/chamada-escolar/main/app/src/main/res/drawable/logo_escola.png" -o app/src/main/res/drawable/logo_escola.png
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Compilar APK
+        run: gradle assembleDebug
+      - name: Enviar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AssistentePedagogico-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
