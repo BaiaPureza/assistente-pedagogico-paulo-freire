@@ -166,11 +166,102 @@ ia.setOnClickListener(v->configurarIA());
         EditText relato=campo("Descreva o que está acontecendo com o aluno em sala de aula");relato.setMinLines(5);
         Button gerar=botao("Preparar relatório");root.addView(gerar);
         gerar.setOnClickListener(v->{
-            if(aluno.getText().toString().trim().isEmpty()||relato.getText().toString().trim().isEmpty()){toast("Informe o nome do aluno e o relato.");return;}
-            String conteudo=escola+"\nRELATÓRIO INDIVIDUAL DO ALUNO\n\nAluno: "+aluno.getText()+"\nSérie/turma: "+serie.getText()+"\nProfessora: Marilene Maria da Silva\nCoordenadora: "+coord.getText()+"\nData: "+data.getText()+"\n\nRELATO:\n"+relato.getText()+"\n\nTexto aguardando revisão e aprimoramento com inteligência artificial.";
-            long id=db.salvar("RELATORIO",aluno.getText().toString(),serie.getText().toString(),"","",data.getText().toString(),conteudo);
-            visualizar(id);
-        });
+            
+gerar.setOnClickListener(v->{
+
+    if(aulas.getText().toString().trim().isEmpty()){
+        toast("Informe a quantidade de aulas.");
+        return;
+    }
+
+    String c=comp.getSelectedItem().toString();
+    String t=turmas.getSelectedItem().toString();
+    String h=hab.getText().toString().trim();
+    String dataPlano=data.getText().toString().trim();
+    String duracao=aulas.getText().toString().trim();
+
+    StringBuilder entrada=new StringBuilder();
+
+    entrada.append("ESCOLA: ").append(escola).append("\n");
+    entrada.append("TURMA: ").append(t).append("\n");
+    entrada.append("COMPONENTE CURRICULAR: ").append(c).append("\n");
+    entrada.append("DATA: ").append(dataPlano).append("\n");
+    entrada.append("DURAÇÃO: ").append(duracao).append("\n");
+
+    if(!h.isEmpty()){
+        entrada.append("HABILIDADES BNCC: ").append(h).append("\n");
+    }
+
+    entrada.append("PROFESSORA: Marilene Maria da Silva\n");
+
+    gerar.setEnabled(false);
+
+    ProgressDialog carregando=new ProgressDialog(this);
+    carregando.setMessage("A inteligência artificial está elaborando o plano de aula...");
+    carregando.setCancelable(false);
+    carregando.show();
+
+    new Thread(()->{
+
+        try{
+
+            String retorno=enviarParaIA("plano",entrada.toString());
+
+            JSONObject resultado=new JSONObject(retorno);
+
+            if(!resultado.optBoolean("sucesso",false)){
+                throw new Exception(
+                    resultado.optString("erro","A IA não conseguiu elaborar o plano.")
+                );
+            }
+
+            String conteudo=resultado.optString("texto","").trim();
+
+            if(conteudo.isEmpty()){
+                throw new Exception("A inteligência artificial retornou um texto vazio.");
+            }
+
+            runOnUiThread(()->{
+
+                carregando.dismiss();
+                gerar.setEnabled(true);
+
+                long id=db.salvar(
+                    "PLANO",
+                    "",
+                    t,
+                    c,
+                    h,
+                    dataPlano,
+                    conteudo
+                );
+
+                toast("Plano de aula gerado com sucesso!");
+
+                visualizar(id);
+            });
+
+        }catch(Exception erro){
+
+            runOnUiThread(()->{
+
+                carregando.dismiss();
+                gerar.setEnabled(true);
+
+                new AlertDialog.Builder(this)
+                    .setTitle("Erro ao gerar plano")
+                    .setMessage(erro.getMessage())
+                    .setPositiveButton("OK",null)
+                    .show();
+
+            });
+
+        }
+
+    }).start();
+
+});
+
         voltar();
     }
     void formPlano(){
