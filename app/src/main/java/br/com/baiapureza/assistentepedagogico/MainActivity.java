@@ -47,10 +47,23 @@ public class MainActivity extends Activity {
     TextView texto(String s,int size){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(0xFF24292F);return t;}
     Button botao(String s){Button b=new Button(this);b.setText(s);b.setAllCaps(false);return b;}
     void base(String titulo){
-        ScrollView sc=new ScrollView(this); root=new LinearLayout(this);root.setOrientation(1);root.setPadding(dp(20),dp(16),dp(20),dp(24));root.setBackgroundColor(fundo);sc.addView(root);sc.setFillViewport(true);sc.setClipToPadding(false);sc.setBackgroundColor(fundo);
+        ScrollView sc=new ScrollView(this); root=new LinearLayout(this);root.setOrientation(1);root.setPadding(dp(20),dp(16),dp(20),dp(24));root.setBackgroundColor(fundo);sc.addView(root);sc.setFillViewport(true);sc.setClipToPadding(true);sc.setBackgroundColor(fundo);
         ViewCompat.setOnApplyWindowInsetsListener(sc,(view,windowInsets)->{
-            Insets barras=windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
-            view.setPadding(0,barras.top,0,barras.bottom);
+            Insets sistema=windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets teclado=windowInsets.getInsets(WindowInsetsCompat.Type.ime());
+            view.setPadding(sistema.left,sistema.top,sistema.right,Math.max(sistema.bottom,teclado.bottom));
+            if(windowInsets.isVisible(WindowInsetsCompat.Type.ime())){
+                view.post(()->{
+                    View focado=getCurrentFocus();
+                    if(focado!=null){
+                        Rect area=new Rect();
+                        focado.getDrawingRect(area);
+                        sc.offsetDescendantRectToMyCoords(focado,area);
+                        int destino=Math.max(0,area.bottom-sc.getHeight()+dp(32));
+                        sc.smoothScrollTo(0,destino);
+                    }
+                });
+            }
             return windowInsets;
         });
         setContentView(sc);ViewCompat.requestApplyInsets(sc);
