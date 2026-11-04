@@ -415,7 +415,9 @@ private String obterSenhaIA() throws Exception {
     byte[] original = cipher.doFinal(dados);
 
     return new String(original, "UTF-8");
-    // ENVIAR TEXTO PARA A INTELIGÊNCIA ARTIFICIAL
+}
+
+// ENVIAR TEXTO PARA A INTELIGÊNCIA ARTIFICIAL
 private String enviarParaIA(String tipo, String textoEntrada) throws Exception {
 
     String chave = obterSenhaIA();
@@ -529,6 +531,5 @@ private String enviarParaIA(String tipo, String textoEntrada) throws Exception {
     }
 
     return resposta.toString();
-}
 }
 }
