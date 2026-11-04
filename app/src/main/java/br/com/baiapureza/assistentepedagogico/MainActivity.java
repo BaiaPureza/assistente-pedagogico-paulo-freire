@@ -21,6 +21,9 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
 
 public class MainActivity extends Activity {
     Database db;
