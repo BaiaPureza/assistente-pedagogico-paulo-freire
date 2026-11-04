@@ -415,5 +415,120 @@ private String obterSenhaIA() throws Exception {
     byte[] original = cipher.doFinal(dados);
 
     return new String(original, "UTF-8");
+    // ENVIAR TEXTO PARA A INTELIGÊNCIA ARTIFICIAL
+private String enviarParaIA(String tipo, String textoEntrada) throws Exception {
+
+    String chave = obterSenhaIA();
+
+    if (chave == null || chave.isEmpty()) {
+        throw new Exception("Configure a senha da inteligência artificial primeiro.");
+    }
+
+    JSONObject dados = new JSONObject();
+    dados.put("chave", chave);
+    dados.put("tipo", tipo);
+    dados.put("texto", textoEntrada);
+
+    HttpURLConnection conexao = (HttpURLConnection)
+        new URL(URL_IA).openConnection();
+
+    conexao.setRequestMethod("POST");
+    conexao.setConnectTimeout(20000);
+    conexao.setReadTimeout(60000);
+    conexao.setDoOutput(true);
+    conexao.setInstanceFollowRedirects(false);
+    conexao.setRequestProperty(
+        "Content-Type", "application/json; charset=UTF-8"
+    );
+    conexao.setRequestProperty("Accept", "application/json");
+
+    OutputStream saida = conexao.getOutputStream();
+    saida.write(dados.toString().getBytes("UTF-8"));
+    saida.flush();
+    saida.close();
+
+    int codigo = conexao.getResponseCode();
+
+    // O Google Apps Script pode redirecionar a resposta.
+    if (codigo == 301 || codigo == 302 ||
+        codigo == 303 || codigo == 307 || codigo == 308) {
+
+        String destino = conexao.getHeaderField("Location");
+        conexao.disconnect();
+
+        if (destino == null) {
+            throw new Exception("O Google não informou o endereço da resposta.");
+        }
+
+        URL urlResposta = new URL(new URL(URL_IA), destino);
+
+        HttpURLConnection redirecionamento =
+            (HttpURLConnection) urlResposta.openConnection();
+
+        redirecionamento.setRequestMethod("GET");
+        redirecionamento.setConnectTimeout(20000);
+        redirecionamento.setReadTimeout(60000);
+
+        codigo = redirecionamento.getResponseCode();
+
+        InputStream entrada = codigo >= 200 && codigo < 300
+            ? redirecionamento.getInputStream()
+            : redirecionamento.getErrorStream();
+
+        if (entrada == null) {
+            redirecionamento.disconnect();
+            throw new Exception("O Google não retornou uma resposta válida.");
+        }
+
+        BufferedReader leitor = new BufferedReader(
+            new InputStreamReader(entrada, "UTF-8")
+        );
+
+        StringBuilder resposta = new StringBuilder();
+        String linha;
+
+        while ((linha = leitor.readLine()) != null) {
+            resposta.append(linha);
+        }
+
+        leitor.close();
+        redirecionamento.disconnect();
+
+        if (codigo < 200 || codigo >= 300) {
+            throw new Exception("Erro na comunicação com o Google. Código: " + codigo);
+        }
+
+        return resposta.toString();
+    }
+
+    InputStream entrada = codigo >= 200 && codigo < 300
+        ? conexao.getInputStream()
+        : conexao.getErrorStream();
+
+    if (entrada == null) {
+        conexao.disconnect();
+        throw new Exception("O servidor não retornou uma resposta.");
+    }
+
+    BufferedReader leitor = new BufferedReader(
+        new InputStreamReader(entrada, "UTF-8")
+    );
+
+    StringBuilder resposta = new StringBuilder();
+    String linha;
+
+    while ((linha = leitor.readLine()) != null) {
+        resposta.append(linha);
+    }
+
+    leitor.close();
+    conexao.disconnect();
+
+    if (codigo < 200 || codigo >= 300) {
+        throw new Exception("Erro na comunicação com o Google. Código: " + codigo);
+    }
+
+    return resposta.toString();
+}
 }
 }
