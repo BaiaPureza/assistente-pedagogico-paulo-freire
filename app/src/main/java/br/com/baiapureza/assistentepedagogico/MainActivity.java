@@ -174,9 +174,35 @@ public class MainActivity extends Activity {
         base(tipo.equals("RELATORIO")?"Relatório individual":"Plano de aula");
         TextView corpo=texto(conteudo,15);corpo.setPadding(dp(8),dp(8),dp(8),dp(18));root.addView(corpo);
         Button editar=botao("Editar documento");root.addView(editar);editar.setOnClickListener(v->editarDocumento(id));
+        Button historico=botao("Ver versões anteriores");root.addView(historico);historico.setOnClickListener(v->historicoVersoes(id));
         Button pdf=botao("Exportar PDF");root.addView(pdf);pdf.setOnClickListener(v->exportarPdf(titulo,conteudo));
         Button word=botao("Exportar Word");root.addView(word);word.setOnClickListener(v->exportarWord(titulo,conteudo));
         Button voltar=botao("← Voltar aos documentos");root.addView(voltar);voltar.setOnClickListener(v->documentos());
+    }
+    void historicoVersoes(long id){
+        Cursor c=db.listarVersoes(id);
+        base("Versões anteriores");
+        int total=0;
+        while(c.moveToNext()){
+            total++;
+            long versaoId=c.getLong(0);
+            String titulo=c.getString(1),data=c.getString(2),salvo=c.getString(3);
+            Button item=botao("Versão de "+salvo+" • "+data);root.addView(item);
+            item.setOnClickListener(v->visualizarVersao(versaoId,id));
+        }
+        c.close();
+        if(total==0){TextView vazio=texto("Este documento ainda não possui versões anteriores. Elas serão guardadas automaticamente sempre que você salvar uma edição.",14);vazio.setPadding(0,dp(16),0,dp(12));root.addView(vazio);}
+        Button voltar=botao("← Voltar ao documento");root.addView(voltar);voltar.setOnClickListener(v->visualizar(id));
+    }
+    void visualizarVersao(long versaoId,long documentoId){
+        Cursor c=db.obterVersao(versaoId);if(!c.moveToFirst()){c.close();return;}
+        String titulo=c.getString(2),data=c.getString(6),conteudo=c.getString(7);c.close();
+        base("Versão anterior");
+        TextView info=texto("Registro anterior • "+data,13);root.addView(info);
+        TextView corpo=texto(conteudo,15);corpo.setPadding(dp(8),dp(8),dp(8),dp(18));root.addView(corpo);
+        Button pdf=botao("Exportar esta versão em PDF");root.addView(pdf);pdf.setOnClickListener(v->exportarPdf(titulo,conteudo));
+        Button word=botao("Exportar esta versão em Word");root.addView(word);word.setOnClickListener(v->exportarWord(titulo,conteudo));
+        Button voltar=botao("← Voltar às versões");root.addView(voltar);voltar.setOnClickListener(v->historicoVersoes(documentoId));
     }
     void editarDocumento(long id){
         Cursor c=db.obter(id);if(!c.moveToFirst()){c.close();toast("Documento não encontrado.");return;}
