@@ -174,10 +174,22 @@ public class MainActivity extends Activity {
         base(tipo.equals("RELATORIO")?"Relatório individual":"Plano de aula");
         TextView corpo=texto(conteudo,15);corpo.setPadding(dp(8),dp(8),dp(8),dp(18));root.addView(corpo);
         Button editar=botao("Editar documento");root.addView(editar);editar.setOnClickListener(v->editarDocumento(id));
+        Button duplicar=botao("Duplicar documento");root.addView(duplicar);duplicar.setOnClickListener(v->confirmarDuplicacao(id));
         Button historico=botao("Ver versões anteriores");root.addView(historico);historico.setOnClickListener(v->historicoVersoes(id));
         Button pdf=botao("Exportar PDF");root.addView(pdf);pdf.setOnClickListener(v->exportarPdf(titulo,conteudo));
         Button word=botao("Exportar Word");root.addView(word);word.setOnClickListener(v->exportarWord(titulo,conteudo));
         Button voltar=botao("← Voltar aos documentos");root.addView(voltar);voltar.setOnClickListener(v->documentos());
+    }
+    void confirmarDuplicacao(long id){
+        new AlertDialog.Builder(this)
+            .setTitle("Duplicar documento")
+            .setMessage("Será criada uma cópia independente. O documento original continuará intacto. Deseja continuar?")
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Duplicar",(dialog,which)->{
+                long novoId=db.duplicar(id);
+                if(novoId>0){toast("Cópia criada. Você já pode editar a nova versão.");visualizar(novoId);}
+                else toast("Não foi possível duplicar o documento.");
+            }).show();
     }
     void historicoVersoes(long id){
         Cursor c=db.listarVersoes(id);
