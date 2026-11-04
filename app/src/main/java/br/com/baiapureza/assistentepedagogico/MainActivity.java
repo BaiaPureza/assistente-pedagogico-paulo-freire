@@ -170,12 +170,34 @@ public class MainActivity extends Activity {
     }
     void visualizar(long id){
         Cursor c=db.obter(id);if(!c.moveToFirst()){c.close();return;}
-        String tipo=c.getString(1),titulo=c.getString(2),data=c.getString(6),conteudo=c.getString(7);c.close();
+        String tipo=c.getString(1),titulo=c.getString(2),turma=c.getString(3),componente=c.getString(4),habilidades=c.getString(5),data=c.getString(6),conteudo=c.getString(7);c.close();
         base(tipo.equals("RELATORIO")?"Relatório individual":"Plano de aula");
         TextView corpo=texto(conteudo,15);corpo.setPadding(dp(8),dp(8),dp(8),dp(18));root.addView(corpo);
+        Button editar=botao("Editar documento");root.addView(editar);editar.setOnClickListener(v->editarDocumento(id));
         Button pdf=botao("Exportar PDF");root.addView(pdf);pdf.setOnClickListener(v->exportarPdf(titulo,conteudo));
         Button word=botao("Exportar Word");root.addView(word);word.setOnClickListener(v->exportarWord(titulo,conteudo));
         Button voltar=botao("← Voltar aos documentos");root.addView(voltar);voltar.setOnClickListener(v->documentos());
+    }
+    void editarDocumento(long id){
+        Cursor c=db.obter(id);if(!c.moveToFirst()){c.close();toast("Documento não encontrado.");return;}
+        String tipo=c.getString(1),tituloAtual=c.getString(2),turmaAtual=c.getString(3),componenteAtual=c.getString(4),habilidadesAtual=c.getString(5),dataAtual=c.getString(6),conteudoAtual=c.getString(7);c.close();
+        base(tipo.equals("RELATORIO")?"Editar relatório":"Editar plano de aula");
+        EditText titulo=campo(tipo.equals("RELATORIO")?"Nome do aluno":"Título (opcional)");titulo.setText(tituloAtual);
+        EditText turma=campo("Série / turma");turma.setText(turmaAtual);
+        EditText componente=campo("Componente curricular");componente.setText(componenteAtual);
+        EditText habilidades=campo("Habilidades BNCC");habilidades.setText(habilidadesAtual);
+        EditText data=campo("Data (dd/mm/aaaa)");data.setText(dataAtual);
+        TextView rotulo=texto("Conteúdo completo do documento",16);rotulo.setPadding(0,dp(10),0,0);root.addView(rotulo);
+        EditText conteudo=campo("Edite o texto do documento");conteudo.setText(conteudoAtual);conteudo.setMinLines(12);conteudo.setGravity(Gravity.TOP|Gravity.START);
+        TextView dica=texto("As alterações serão salvas neste documento, sem criar uma cópia. Revise o texto antes de salvar.",12);dica.setPadding(0,dp(8),0,dp(8));root.addView(dica);
+        Button salvar=botao("Salvar alterações");root.addView(salvar);
+        salvar.setOnClickListener(v->{
+            if(tipo.equals("RELATORIO")&&titulo.getText().toString().trim().isEmpty()){toast("Informe o nome do aluno.");return;}
+            if(conteudo.getText().toString().trim().isEmpty()){toast("O conteúdo não pode ficar vazio.");return;}
+            int alterados=db.atualizar(id,titulo.getText().toString().trim(),turma.getText().toString().trim(),componente.getText().toString().trim(),habilidades.getText().toString().trim(),data.getText().toString().trim(),conteudo.getText().toString());
+            if(alterados>0){toast("Documento atualizado com sucesso.");visualizar(id);}else toast("Não foi possível salvar as alterações.");
+        });
+        Button cancelar=botao("Cancelar");root.addView(cancelar);cancelar.setOnClickListener(v->visualizar(id));
     }
     void toast(String s){Toast.makeText(this,s,Toast.LENGTH_LONG).show();}
     File pasta(){File f=new File(getFilesDir(),"documentos");if(!f.exists())f.mkdirs();return f;}
