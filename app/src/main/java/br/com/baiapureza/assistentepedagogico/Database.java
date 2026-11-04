@@ -14,6 +14,13 @@ public class Database extends SQLiteOpenHelper {
         ContentValues v=new ContentValues();v.put("tipo",tipo);v.put("titulo",titulo);v.put("turma",turma);v.put("componente",componente);v.put("habilidades",habilidades);v.put("data",data);v.put("conteudo",conteudo);
         return getWritableDatabase().insert("documentos",null,v);
     }
-    public Cursor listar(){return getReadableDatabase().rawQuery("SELECT id,tipo,CASE WHEN tipo='RELATORIO' THEN titulo ELSE componente END,data FROM documentos ORDER BY id DESC",null);}
+    public Cursor listarPorTipo(String tipo,String filtro){
+        String termo="%"+(filtro==null?"":filtro.trim())+"%";
+        String ordem=tipo.equals("RELATORIO")?"titulo COLLATE NOCASE ASC, id DESC":"turma COLLATE NOCASE ASC, componente COLLATE NOCASE ASC, id DESC";
+        return getReadableDatabase().rawQuery(
+            "SELECT id,titulo,turma,componente,data FROM documentos WHERE tipo=? AND (titulo LIKE ? OR turma LIKE ? OR componente LIKE ? OR data LIKE ?) ORDER BY "+ordem,
+            new String[]{tipo,termo,termo,termo,termo}
+        );
+    }
     public Cursor obter(long id){return getReadableDatabase().rawQuery("SELECT id,tipo,titulo,turma,componente,habilidades,data,conteudo FROM documentos WHERE id=?",new String[]{String.valueOf(id)});}
 }
