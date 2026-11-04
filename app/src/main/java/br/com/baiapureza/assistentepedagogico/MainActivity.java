@@ -95,8 +95,63 @@ public class MainActivity extends Activity {
         Button r=botao("Relatórios individuais");root.addView(r);r.setOnClickListener(v->formRelatorio());
         Button p=botao("Planos de aula");root.addView(p);p.setOnClickListener(v->formPlano());
         Button d=botao("Documentos salvos");root.addView(d);d.setOnClickListener(v->documentos());
+        Button ia=botao("Configurar inteligência artificial");root.addView(ia);
+ia.setOnClickListener(v->configurarIA());
         TextView aviso=texto("Os documentos ficam salvos neste aparelho. A geração com inteligência artificial e a exportação serão ativadas nas próximas etapas.",13);aviso.setGravity(Gravity.CENTER);aviso.setPadding(0,dp(18),0,0);root.addView(aviso);
     }
+    void configurarIA(){
+    base("Configurar inteligência artificial");
+
+    TextView explicacao=texto(
+        "Informe a senha de acesso configurada no Google Apps Script. Ela será armazenada de forma criptografada neste aparelho.",
+        14
+    );
+    explicacao.setPadding(0,0,0,dp(12));
+    root.addView(explicacao);
+
+    EditText senha=campo("Digite sua senha de acesso");
+    senha.setInputType(
+        android.text.InputType.TYPE_CLASS_TEXT |
+        android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+    );
+
+    TextView status=texto("",14);
+    status.setPadding(0,dp(10),0,dp(10));
+    root.addView(status);
+
+    try{
+        if(obterSenhaIA()!=null){
+            status.setText("Uma senha já está configurada neste aparelho.");
+        }else{
+            status.setText("Nenhuma senha configurada ainda.");
+        }
+    }catch(Exception e){
+        status.setText("Não foi possível verificar a configuração.");
+    }
+
+    Button salvar=botao("Salvar senha com segurança");
+    root.addView(salvar);
+
+    salvar.setOnClickListener(v->{
+        String valor=senha.getText().toString().trim();
+
+        if(valor.isEmpty()){
+            toast("Digite a senha antes de salvar.");
+            return;
+        }
+
+        try{
+            salvarSenhaIA(valor);
+            senha.setText("");
+            status.setText("Senha configurada e armazenada com segurança neste aparelho.");
+            toast("Configuração salva com sucesso!");
+        }catch(Exception e){
+            toast("Erro ao salvar a configuração: "+e.getMessage());
+        }
+    });
+
+    voltar();
+}
     EditText campo(String hint){EditText e=new EditText(this);e.setHint(hint);e.setSingleLine(false);root.addView(e);return e;}
     void voltar(){Button b=botao("← Voltar ao início");root.addView(b);b.setOnClickListener(v->inicio());}
     String hoje(){return new SimpleDateFormat("dd/MM/yyyy",Locale.getDefault()).format(new Date());}
