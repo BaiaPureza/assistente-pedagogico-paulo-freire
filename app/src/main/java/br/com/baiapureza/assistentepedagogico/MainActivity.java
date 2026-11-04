@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
         "Recomposição da Aprendizagem Língua Portuguesa"
     };
     final String turmaPadrao="Ensino Fundamental de 9 Anos - 2º Ano";
+    final String URL_IA = "https://script.google.com/macros/s/AKfycbyvgIfcagzlU34i45EKrynIcxXyCyFQgIBtIt1QSNrQdzWMw-T3dPSElOnf4q3rAWfU/exec";
 
     @Override public void onCreate(Bundle b){ super.onCreate(b); configurarBarrasSistema(); db=new Database(this); inicio(); }
     void configurarBarrasSistema(){
