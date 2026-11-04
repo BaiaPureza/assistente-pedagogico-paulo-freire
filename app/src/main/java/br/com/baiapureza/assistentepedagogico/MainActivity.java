@@ -281,4 +281,84 @@ public class MainActivity extends Activity {
     }
     void write(ZipOutputStream z,String s)throws Exception{z.write(s.getBytes("UTF-8"));}
     String escape(String s){return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");}
+
+    // CHAVE DE CRIPTOGRAFIA DO ANDROID
+private SecretKey obterOuCriarChaveIA() throws Exception {
+    String alias = "AssistentePedagogicoIA";
+
+    KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+    ks.load(null);
+
+    if (ks.containsAlias(alias)) {
+        return (SecretKey) ks.getKey(alias, null);
+    }
+
+    KeyGenerator gerador = KeyGenerator.getInstance(
+        KeyProperties.KEY_ALGORITHM_AES,
+        "AndroidKeyStore"
+    );
+
+    gerador.init(new KeyGenParameterSpec.Builder(
+        alias,
+        KeyProperties.PURPOSE_ENCRYPT |
+        KeyProperties.PURPOSE_DECRYPT
+    )
+        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+        .setRandomizedEncryptionRequired(true)
+        .build()
+    );
+
+    return gerador.generateKey();
+}
+
+// SALVAR SENHA CRIPTOGRAFADA
+private void salvarSenhaIA(String senha) throws Exception {
+    SecretKey chave = obterOuCriarChaveIA();
+
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+    cipher.init(Cipher.ENCRYPT_MODE, chave);
+
+    byte[] criptografado = cipher.doFinal(
+        senha.getBytes("UTF-8")
+    );
+
+    android.content.SharedPreferences prefs =
+        getSharedPreferences("configuracao_ia", MODE_PRIVATE);
+
+    prefs.edit()
+        .putString("senha_iv", Base64.encodeToString(
+            cipher.getIV(), Base64.NO_WRAP))
+        .putString("senha_dados", Base64.encodeToString(
+            criptografado, Base64.NO_WRAP))
+        .apply();
+}
+
+// RECUPERAR SENHA
+private String obterSenhaIA() throws Exception {
+    android.content.SharedPreferences prefs =
+        getSharedPreferences("configuracao_ia", MODE_PRIVATE);
+
+    String ivSalvo = prefs.getString("senha_iv", null);
+    String dadosSalvos = prefs.getString("senha_dados", null);
+
+    if (ivSalvo == null || dadosSalvos == null) {
+        return null;
+    }
+
+    byte[] iv = Base64.decode(ivSalvo, Base64.NO_WRAP);
+    byte[] dados = Base64.decode(dadosSalvos, Base64.NO_WRAP);
+
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+    cipher.init(
+        Cipher.DECRYPT_MODE,
+        obterOuCriarChaveIA(),
+        new GCMParameterSpec(128, iv)
+    );
+
+    byte[] original = cipher.doFinal(dados);
+
+    return new String(original, "UTF-8");
+}
 }
