@@ -8,6 +8,8 @@ import android.content.*;
 import android.database.Cursor;
 import android.net.Uri;
 import android.view.*;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.*;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
@@ -123,12 +125,48 @@ public class MainActivity extends Activity {
         voltar();
     }
     void documentos(){
-        base("Documentos salvos");Cursor c=db.listar();
+        base("Documentos salvos");
+        EditText pesquisa=campo("Pesquisar por aluno, turma, componente ou data");
+        LinearLayout abas=new LinearLayout(this);abas.setOrientation(0);root.addView(abas);
+        Button relatorios=botao("Relatórios");abas.addView(relatorios,new LinearLayout.LayoutParams(0,dp(48),1));
+        Button planos=botao("Planos de aula");abas.addView(planos,new LinearLayout.LayoutParams(0,dp(48),1));
+        LinearLayout lista=new LinearLayout(this);lista.setOrientation(1);root.addView(lista);
+        final String[] tipoAtual={"RELATORIO"};
+        Runnable atualizar=()->atualizarListaDocumentos(lista,tipoAtual[0],pesquisa.getText().toString());
+        relatorios.setOnClickListener(v->{tipoAtual[0]="RELATORIO";atualizar.run();});
+        planos.setOnClickListener(v->{tipoAtual[0]="PLANO";atualizar.run();});
+        pesquisa.addTextChangedListener(new TextWatcher(){
+            public void beforeTextChanged(CharSequence s,int start,int count,int after){}
+            public void onTextChanged(CharSequence s,int start,int before,int count){atualizar.run();}
+            public void afterTextChanged(Editable e){}
+        });
+        atualizar.run();
+        voltar();
+    }
+    void atualizarListaDocumentos(LinearLayout lista,String tipo,String filtro){
+        lista.removeAllViews();
+        Cursor c=db.listarPorTipo(tipo,filtro);
+        String grupoAnterior="";
+        int quantidade=0;
         while(c.moveToNext()){
-            final long id=c.getLong(0);String tipo=c.getString(1),titulo=c.getString(2),data=c.getString(3);
-            Button b=botao((tipo.equals("RELATORIO")?"Relatório: ":"Plano: ")+titulo+" • "+data);root.addView(b);b.setOnClickListener(v->visualizar(id));
+            quantidade++;
+            final long id=c.getLong(0);
+            String titulo=c.getString(1),turma=c.getString(2),componente=c.getString(3),data=c.getString(4);
+            String grupo=tipo.equals("RELATORIO")?titulo:turma+" • "+componente;
+            if(!grupo.equals(grupoAnterior)){
+                TextView cabecalho=texto(grupo,17);
+                cabecalho.setTypeface(null,1);cabecalho.setTextColor(azul);
+                cabecalho.setPadding(0,dp(16),0,dp(5));lista.addView(cabecalho);
+                grupoAnterior=grupo;
+            }
+            Button item=botao((tipo.equals("RELATORIO")?"Relatório de ":"Plano de aula • ")+data);
+            lista.addView(item);item.setOnClickListener(v->visualizar(id));
         }
-        if(c.getCount()==0)root.addView(texto("Nenhum documento salvo ainda.",15));c.close();voltar();
+        c.close();
+        if(quantidade==0){
+            TextView vazio=texto(filtro.trim().isEmpty()?"Nenhum documento salvo nesta categoria.":"Nenhum documento encontrado para essa pesquisa.",15);
+            vazio.setPadding(0,dp(18),0,dp(12));lista.addView(vazio);
+        }
     }
     void visualizar(long id){
         Cursor c=db.obter(id);if(!c.moveToFirst()){c.close();return;}
