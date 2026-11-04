@@ -22,5 +22,9 @@ public class Database extends SQLiteOpenHelper {
             new String[]{tipo,termo,termo,termo,termo}
         );
     }
+    public int atualizar(long id,String titulo,String turma,String componente,String habilidades,String data,String conteudo){
+        ContentValues v=new ContentValues();v.put("titulo",titulo);v.put("turma",turma);v.put("componente",componente);v.put("habilidades",habilidades);v.put("data",data);v.put("conteudo",conteudo);
+        return getWritableDatabase().update("documentos",v,"id=?",new String[]{String.valueOf(id)});
+    }
     public Cursor obter(long id){return getReadableDatabase().rawQuery("SELECT id,tipo,titulo,turma,componente,habilidades,data,conteudo FROM documentos WHERE id=?",new String[]{String.valueOf(id)});}
 }
