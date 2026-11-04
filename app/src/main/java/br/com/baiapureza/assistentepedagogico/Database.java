@@ -47,5 +47,14 @@ public class Database extends SQLiteOpenHelper {
     public Cursor obterVersao(long id){
         return getReadableDatabase().rawQuery("SELECT id,tipo,titulo,turma,componente,habilidades,data,conteudo FROM documento_versoes WHERE id=?",new String[]{String.valueOf(id)});
     }
+    public long duplicar(long id){
+        SQLiteDatabase d=getWritableDatabase();
+        android.database.Cursor c=d.rawQuery("SELECT tipo,titulo,turma,componente,habilidades,data,conteudo FROM documentos WHERE id=?",new String[]{String.valueOf(id)});
+        if(!c.moveToFirst()){c.close();return -1;}
+        ContentValues v=new ContentValues();
+        v.put("tipo",c.getString(0));v.put("titulo",c.getString(1));v.put("turma",c.getString(2));v.put("componente",c.getString(3));v.put("habilidades",c.getString(4));v.put("data",c.getString(5));v.put("conteudo",c.getString(6));
+        c.close();
+        return d.insert("documentos",null,v);
+    }
     public Cursor obter(long id){return getReadableDatabase().rawQuery("SELECT id,tipo,titulo,turma,componente,habilidades,data,conteudo FROM documentos WHERE id=?",new String[]{String.valueOf(id)});}
 }
